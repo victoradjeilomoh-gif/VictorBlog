@@ -1,5 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import type { Context } from '@netlify/functions';
+import { verify } from './_auth.mts';
 
 // GET  /api/content  → { content: <SiteContent> | null }   (public)
 // POST /api/content  → save the full content document        (password required)
@@ -22,15 +23,8 @@ export default async (req: Request, _context: Context) => {
   }
 
   if (req.method === 'POST' || req.method === 'PUT') {
-    const expected = process.env.ADMIN_PASSWORD;
-    if (!expected) {
-      return json(
-        { ok: false, error: 'ADMIN_PASSWORD is not set on the server. Add it in Netlify → Site settings → Environment variables.' },
-        500,
-      );
-    }
     const given = req.headers.get('x-admin-password') || '';
-    if (given !== expected) return json({ ok: false, error: 'Incorrect password.' }, 401);
+    if (!(await verify(given))) return json({ ok: false, error: 'Incorrect password.' }, 401);
 
     let body: unknown;
     try {

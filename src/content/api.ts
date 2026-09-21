@@ -102,7 +102,66 @@ export async function saveContent(content: SiteContent, password: string): Promi
   }
 }
 
-/** Verify the admin password against the server (used by the login screen). */
+// ---- Admin authentication -------------------------------------------------
+// The password is set on first run from the admin and stored (hashed) in
+// Netlify Blobs — no environment variable needed. In dev (no functions) it is
+// kept in localStorage so the flow is testable locally.
+
+const LS_AUTH = 'val-admin-auth-v1';
+
+const readLocalAuth = (): string | null => {
+  try {
+    const raw = localStorage.getItem(LS_AUTH);
+    return raw ? (JSON.parse(raw).password as string) : null;
+  } catch {
+    return null;
+  }
+};
+
+/** Whether an admin password has been set yet (drives setup vs login screen). */
+export async function getAuthStatus(): Promise<{ configured: boolean; local?: boolean }> {
+  try {
+    const res = await fetch(`${API}/auth`, { cache: 'no-store' });
+    const data = (await readJson(res)) as { configured?: boolean } | null;
+    if (data && typeof data.configured === 'boolean') return { configured: data.configured };
+  } catch {
+    /* no function — dev */
+  }
+  return { configured: readLocalAuth() !== null, local: true };
+}
+
+/** Set the admin password (first run), or change it with the current password. */
+export async function setPassword(
+  password: string,
+  current?: string,
+): Promise<{ ok: boolean; error?: string; local?: boolean }> {
+  if (password.trim().length < 6) return { ok: false, error: 'Password must be at least 6 characters.' };
+  try {
+    const res = await fetch(`${API}/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, current }),
+    });
+    const data = (await readJson(res)) as { ok?: boolean; error?: string } | null;
+    if (res.ok && data?.ok) return { ok: true };
+    if (data?.error) return { ok: false, error: data.error };
+    // No function (dev) → store locally.
+  } catch {
+    /* fall through to local */
+  }
+  const existing = readLocalAuth();
+  if (existing !== null && current !== undefined && current !== existing) {
+    return { ok: false, error: 'Current password is incorrect.' };
+  }
+  try {
+    localStorage.setItem(LS_AUTH, JSON.stringify({ password }));
+    return { ok: true, local: true };
+  } catch {
+    return { ok: false, error: 'Could not save locally.' };
+  }
+}
+
+/** Verify the admin password (used by the login screen). */
 export async function verifyPassword(password: string): Promise<{ ok: boolean; local?: boolean }> {
   try {
     const res = await fetch(`${API}/login`, {
@@ -111,11 +170,12 @@ export async function verifyPassword(password: string): Promise<{ ok: boolean; l
     });
     const data = (await readJson(res)) as { ok?: boolean } | null;
     if (data && typeof data.ok === 'boolean') return { ok: data.ok };
-    // No function (dev): accept any non-empty password locally.
-    return { ok: password.trim().length > 0, local: true };
   } catch {
-    return { ok: password.trim().length > 0, local: true };
+    /* no function — dev */
   }
+  const local = readLocalAuth();
+  if (local !== null) return { ok: password === local, local: true };
+  return { ok: password.trim().length > 0, local: true }; // not configured yet in dev
 }
 
 const fileToDataUrl = (file: File): Promise<string> =>

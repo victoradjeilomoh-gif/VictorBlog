@@ -356,7 +356,13 @@ function PublicSite({ content }: { content: SiteContent }) {
 
       <footer>
         <span className="footer-mark">{content.footer.mark}</span>
-        <p>© {new Date().getFullYear()} {content.footer.name}</p>
+        <p>
+          © {new Date().getFullYear()} {content.footer.name}
+          {' · '}
+          <a className="footer-credit" href="https://solomon-ey.netlify.app/" target="_blank" rel="noreferrer">
+            Developer
+          </a>
+        </p>
         <a href="#top">Back to top ↑</a>
       </footer>
 

@@ -29,8 +29,9 @@ See **[ADMIN-AND-DEPLOY.md](ADMIN-AND-DEPLOY.md)** for:
 | Styling | Tailwind CSS v4 + custom theme (`src/index.css`) |
 | Content model | `src/content/types.ts`, defaults in `src/content/defaultContent.ts` |
 | Content API (client) | `src/content/api.ts` — talks to functions, falls back to localStorage in dev |
-| Serverless | `netlify/functions/` — `content`, `media` (image upload/serve), `login` |
-| Storage | Netlify Blobs (`site` = content JSON, `media` = uploaded images) |
+| Serverless | `netlify/functions/` — `content`, `media` (image upload/serve), `auth`/`login` (password) |
+| Storage | Netlify Blobs (`site` = content JSON + password hash, `media` = uploaded images) |
+| Admin login | Password set on first run at `/#admin`; stored hashed in Blobs — no env var needed |
 | Front page | `src/App.tsx` (renders entirely from content) |
 | Admin editor | `src/Admin.tsx` |
 
@@ -49,6 +50,8 @@ src/
 netlify/functions/
   content.mts          # GET/POST site content (Netlify Blobs)
   media.mts            # upload + serve images (Netlify Blobs)
+  auth.mts             # first-run set / change admin password
   login.mts            # verify admin password
+  _auth.mts            # shared password hashing/verification helper
 netlify.toml           # build + SPA config
 ```

@@ -23,6 +23,7 @@ dist-ssr
 # Export archives & loose source drops not needed in the repo
 *.zip
 /QR-CODE.jpeg
+/Screenshot*.png
 
 # Editor directories and files
 .vscode/*

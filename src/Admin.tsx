@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LayoutDashboard,
   Images,
@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import type { SiteContent, WorkItem, ServiceItem, ProcessStep, Category, NavLink, SocialLink } from './content/types';
 import { defaultContent } from './content/defaultContent';
-import { saveContent, uploadImage, verifyPassword } from './content/api';
+import { getAuthStatus, saveContent, setPassword as apiSetPassword, uploadImage, verifyPassword } from './content/api';
 import { SocialIcon, SOCIAL_PLATFORMS } from './components/SocialIcon';
 
 type View =
@@ -212,55 +212,110 @@ function StringList({
   );
 }
 
-/* ------------------------------------------------------------- login gate */
+/* ------------------------------------------------------------- auth gate */
 
-function Login({ onAuthed }: { onAuthed: (pw: string) => void }) {
+// Shows a first-run "create password" screen when no password has been set yet,
+// otherwise a normal sign-in screen.
+function AuthGate({ onAuthed }: { onAuthed: (pw: string) => void }) {
+  const [phase, setPhase] = useState<'checking' | 'setup' | 'login'>('checking');
   const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
-  const submit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    let alive = true;
+    getAuthStatus().then((s) => {
+      if (alive) setPhase(s.configured ? 'login' : 'setup');
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const finish = (password: string) => {
+    try {
+      sessionStorage.setItem(SESSION_KEY, password);
+    } catch {
+      /* ignore */
+    }
+    onAuthed(password);
+  };
+
+  const submitLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setErr('');
     const res = await verifyPassword(pw);
     setBusy(false);
-    if (res.ok) {
-      try {
-        sessionStorage.setItem(SESSION_KEY, pw);
-      } catch {
-        /* ignore */
-      }
-      onAuthed(pw);
-    } else {
-      setErr('Incorrect password. Please try again.');
-    }
+    if (res.ok) finish(pw);
+    else setErr('Incorrect password. Please try again.');
   };
+
+  const submitSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.length < 6) return setErr('Password must be at least 6 characters.');
+    if (pw !== pw2) return setErr('The two passwords don’t match.');
+    setBusy(true);
+    setErr('');
+    const res = await apiSetPassword(pw);
+    setBusy(false);
+    if (res.ok) finish(pw);
+    else setErr(res.error || 'Could not set the password.');
+  };
+
+  if (phase === 'checking') {
+    return (
+      <div className="login-screen">
+        <div className="login-card">
+          <span className="login-mark spin"><Loader size={22} /></span>
+          <p style={{ marginTop: 18 }}>Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isSetup = phase === 'setup';
 
   return (
     <div className="login-screen">
-      <form className="login-card" onSubmit={submit}>
+      <form className="login-card" onSubmit={isSetup ? submitSetup : submitLogin}>
         <span className="login-mark">{defaultContent.brand.mark}</span>
-        <h1>Studio admin</h1>
-        <p>Sign in to edit the website content.</p>
+        <h1>{isSetup ? 'Create admin password' : 'Studio admin'}</h1>
+        <p>
+          {isSetup
+            ? 'Set the password you’ll use to edit this website. Keep it safe — you’ll need it every time.'
+            : 'Sign in to edit the website content.'}
+        </p>
         <label className="login-input">
           <Lock size={16} />
           <input
             type="password"
             value={pw}
             autoFocus
-            placeholder="Admin password"
+            placeholder={isSetup ? 'Choose a password (min 6 characters)' : 'Admin password'}
             onChange={(e) => setPw(e.target.value)}
           />
         </label>
+        {isSetup && (
+          <label className="login-input" style={{ marginTop: 10 }}>
+            <Lock size={16} />
+            <input
+              type="password"
+              value={pw2}
+              placeholder="Confirm password"
+              onChange={(e) => setPw2(e.target.value)}
+            />
+          </label>
+        )}
         {err && (
           <p className="login-err">
             <AlertCircle size={15} /> {err}
           </p>
         )}
-        <button type="submit" className="btn-solid" disabled={busy || !pw}>
+        <button type="submit" className="btn-solid" disabled={busy || !pw || (isSetup && !pw2)}>
           {busy ? <Loader size={16} className="spin" /> : <LogIn size={16} />}
-          {busy ? 'Checking…' : 'Sign in'}
+          {busy ? (isSetup ? 'Setting…' : 'Checking…') : isSetup ? 'Set password & enter' : 'Sign in'}
         </button>
         <a className="login-back" href="#top" onClick={() => (window.location.hash = '')}>
           ← Back to the site
@@ -299,7 +354,7 @@ export function Admin({
 
   if (!authed) {
     return (
-      <Login
+      <AuthGate
         onAuthed={(pw) => {
           setPassword(pw);
           setAuthed(true);
@@ -342,6 +397,25 @@ export function Admin({
     setPassword('');
   };
 
+  const changePassword = async () => {
+    const current = window.prompt('Enter your CURRENT password:');
+    if (current === null) return;
+    const next = window.prompt('Enter a NEW password (at least 6 characters):');
+    if (next === null) return;
+    const res = await apiSetPassword(next, current);
+    if (res.ok) {
+      try {
+        sessionStorage.setItem(SESSION_KEY, next);
+      } catch {
+        /* ignore */
+      }
+      setPassword(next);
+      window.alert('Password changed.');
+    } else {
+      window.alert(res.error || 'Could not change the password.');
+    }
+  };
+
   const title = nav.find((n) => n.id === view)?.label ?? 'Overview';
 
   return (
@@ -368,6 +442,9 @@ export function Admin({
           <a href="#top" onClick={() => (window.location.hash = '')}>
             <ExternalLink size={16} /> View live site
           </a>
+          <button onClick={changePassword}>
+            <Lock size={16} /> Change password
+          </button>
           <button onClick={signOut}>
             <LogOut size={16} /> Sign out
           </button>

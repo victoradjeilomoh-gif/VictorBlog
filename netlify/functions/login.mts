@@ -1,8 +1,8 @@
 import type { Context } from '@netlify/functions';
+import { verify } from './_auth.mts';
 
 // POST /api/login  → { ok: boolean }
-// Verifies the admin password so the editor can gate its UI. The password is
-// never returned; only a boolean result.
+// Verifies the admin password (set via /api/auth). No password is ever returned.
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -12,16 +12,8 @@ const json = (body: unknown, status = 200) =>
 
 export default async (req: Request, _context: Context) => {
   if (req.method !== 'POST') return json({ ok: false, error: 'Method not allowed.' }, 405);
-
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) {
-    return json(
-      { ok: false, error: 'ADMIN_PASSWORD is not set on the server. Add it in Netlify → Site settings → Environment variables.' },
-      500,
-    );
-  }
   const given = req.headers.get('x-admin-password') || '';
-  return json({ ok: given === expected });
+  return json({ ok: await verify(given) });
 };
 
 export const config: Config = { path: '/api/login' };

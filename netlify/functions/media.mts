@@ -1,5 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import type { Context } from '@netlify/functions';
+import { verify } from './_auth.mts';
 
 // POST /api/media          → upload an image  (password required)
 //        body: { name, contentType, data: "data:<type>;base64,<...>" }
@@ -44,15 +45,8 @@ export default async (req: Request, context: Context) => {
   }
 
   if (req.method === 'POST') {
-    const expected = process.env.ADMIN_PASSWORD;
-    if (!expected) {
-      return json(
-        { error: 'ADMIN_PASSWORD is not set on the server. Add it in Netlify → Site settings → Environment variables.' },
-        500,
-      );
-    }
     const given = req.headers.get('x-admin-password') || '';
-    if (given !== expected) return json({ error: 'Incorrect password.' }, 401);
+    if (!(await verify(given))) return json({ error: 'Incorrect password.' }, 401);
 
     let body: { name?: string; contentType?: string; data?: string };
     try {
