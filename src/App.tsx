@@ -105,7 +105,13 @@ function PublicSite({ content }: { content: SiteContent }) {
     <div className="site-shell">
       <header className="site-header">
         <a className="brand" href="#top" aria-label={`${content.brand.name}, home`}>
-          <span className="brand-mark">{content.brand.mark}</span>
+          <span className="brand-mark">
+            {content.brand.logo ? (
+              <img src={content.brand.logo} alt={content.brand.name} />
+            ) : (
+              content.brand.mark
+            )}
+          </span>
           <span className="brand-name">{content.brand.name}</span>
         </a>
 
@@ -355,7 +361,13 @@ function PublicSite({ content }: { content: SiteContent }) {
       </main>
 
       <footer>
-        <span className="footer-mark">{content.footer.mark}</span>
+        <span className="footer-mark">
+          {content.brand.logo ? (
+            <img src={content.brand.logo} alt={content.brand.name} />
+          ) : (
+            content.footer.mark
+          )}
+        </span>
         <p>
           © {new Date().getFullYear()} {content.footer.name}
           {' · '}

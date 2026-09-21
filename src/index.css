@@ -350,6 +350,10 @@ footer p .footer-credit:hover { border-color: var(--gold); }
 /* ===================== Public: social, QR, marquee, loader ============= */
 .marquee-item { display: inline-flex; align-items: center; gap: clamp(20px, 3vw, 48px); }
 
+/* Uploaded brand logo replaces the monogram box */
+.brand-mark img, .footer-mark img, .admin-mark img { width: 100%; height: 100%; object-fit: contain; }
+.brand-mark:has(img), .footer-mark:has(img), .admin-mark:has(img) { border: none; background: transparent; padding: 0; }
+
 .hero-social { margin-top: 32px; display: flex; align-items: center; gap: 12px; }
 .hero-social a {
   width: 42px; height: 42px; display: grid; place-items: center;

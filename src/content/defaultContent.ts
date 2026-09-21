@@ -14,7 +14,7 @@ export const defaultContent: SiteContent = {
       'Ghanaian graphic artist and illustrator creating thoughtful work for books, education, culture and communication.',
   },
 
-  brand: { mark: 'VL', name: 'Victor Adjei Lomoh' },
+  brand: { mark: 'VL', name: 'Victor Adjei Lomoh', logo: '' },
 
   nav: [
     { label: 'Work', href: '#work' },

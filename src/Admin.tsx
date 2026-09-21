@@ -422,7 +422,9 @@ export function Admin({
     <div className="admin">
       <aside className="admin-side">
         <div className="admin-brand">
-          <span className="admin-mark">{draft.brand.mark}</span>
+          <span className="admin-mark">
+            {draft.brand.logo ? <img src={draft.brand.logo} alt={draft.brand.name} /> : draft.brand.mark}
+          </span>
           <span>
             <strong>{draft.brand.name}</strong>
             <small>Studio admin</small>
@@ -490,9 +492,25 @@ export function Admin({
               </Panel>
 
               <Panel title="Brand identity">
+                <ImageField
+                  label="Logo image (optional — falls back to the monogram below if empty)"
+                  value={draft.brand.logo}
+                  password={password}
+                  onChange={(v) => patch({ brand: { ...draft.brand, logo: v } })}
+                />
+                {draft.brand.logo && (
+                  <button
+                    type="button"
+                    className="btn-line sm"
+                    style={{ alignSelf: 'flex-start' }}
+                    onClick={() => patch({ brand: { ...draft.brand, logo: '' } })}
+                  >
+                    <X size={14} /> Remove logo (use monogram)
+                  </button>
+                )}
                 <div className="ed-grid">
-                  <Field label="Brand monogram (e.g. VL)" value={draft.brand.mark} onChange={(v) => patch({ brand: { ...draft.brand, mark: v } })} />
                   <Field label="Brand / artist name" value={draft.brand.name} onChange={(v) => patch({ brand: { ...draft.brand, name: v } })} />
+                  <Field label="Monogram letters (used when no logo)" value={draft.brand.mark} onChange={(v) => patch({ brand: { ...draft.brand, mark: v } })} />
                   <Field label="Header button label" value={draft.header.ctaLabel} onChange={(v) => patch({ header: { ...draft.header, ctaLabel: v } })} />
                   <Field label="Header button email" value={draft.header.ctaEmail} onChange={(v) => patch({ header: { ...draft.header, ctaEmail: v } })} />
                 </div>

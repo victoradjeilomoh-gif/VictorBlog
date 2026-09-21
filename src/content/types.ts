@@ -48,7 +48,9 @@ export type SiteContent = {
 
   site: { title: string; description: string };
 
-  brand: { mark: string; name: string };
+  // `mark` is the monogram fallback (e.g. "VL"); `logo` is an optional uploaded
+  // image that replaces the monogram wherever the brand appears.
+  brand: { mark: string; name: string; logo: string };
 
   nav: NavLink[];
 
