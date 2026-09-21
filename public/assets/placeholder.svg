@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Image placeholder">
+  <rect width="800" height="1000" fill="#ebe4d7"/>
+  <rect x="1" y="1" width="798" height="998" fill="none" stroke="#c9bfa9" stroke-width="2"/>
+  <g fill="none" stroke="#b7ab8f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="250" y="360" width="300" height="230" rx="10"/>
+    <circle cx="330" cy="435" r="26"/>
+    <path d="M262 560l90-95 70 70 60-55 66 80"/>
+  </g>
+  <text x="400" y="670" text-anchor="middle" font-family="Georgia, 'Cormorant Garamond', serif" font-size="34" fill="#9b8f75">Image coming soon</text>
+  <text x="400" y="712" text-anchor="middle" font-family="Manrope, system-ui, sans-serif" font-size="18" letter-spacing="3" fill="#b0a488">VICTOR ADJEI LOMOH</text>
+</svg>

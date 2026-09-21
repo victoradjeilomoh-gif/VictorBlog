@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img">
+  <rect width="800" height="1000" fill="#efe7d6"/>
+  <rect x="40" y="40" width="720" height="920" fill="none" stroke="#0d2130" stroke-opacity="0.16"/>
+  <g transform="translate(400 500)"><rect x="-330" y="-380" width="660" height="760" fill="#7c8a5a" opacity=".14"/><circle cx="-240" cy="-300" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-240" cy="-300" r="20" fill="#7c8a5a"/><circle cx="-80" cy="-300" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-80" cy="-300" r="20" fill="#7c8a5a"/><circle cx="80" cy="-300" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="80" cy="-300" r="20" fill="#7c8a5a"/><circle cx="240" cy="-300" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="240" cy="-300" r="20" fill="#7c8a5a"/><circle cx="-240" cy="-140" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-240" cy="-140" r="20" fill="#7c8a5a"/><circle cx="-80" cy="-140" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-80" cy="-140" r="20" fill="#7c8a5a"/><circle cx="80" cy="-140" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="80" cy="-140" r="20" fill="#7c8a5a"/><circle cx="240" cy="-140" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="240" cy="-140" r="20" fill="#7c8a5a"/><circle cx="-240" cy="20" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-240" cy="20" r="20" fill="#7c8a5a"/><circle cx="-80" cy="20" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-80" cy="20" r="20" fill="#7c8a5a"/><circle cx="80" cy="20" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="80" cy="20" r="20" fill="#7c8a5a"/><circle cx="240" cy="20" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="240" cy="20" r="20" fill="#7c8a5a"/><circle cx="-240" cy="180" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-240" cy="180" r="20" fill="#7c8a5a"/><circle cx="-80" cy="180" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-80" cy="180" r="20" fill="#7c8a5a"/><circle cx="80" cy="180" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="80" cy="180" r="20" fill="#7c8a5a"/><circle cx="240" cy="180" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="240" cy="180" r="20" fill="#7c8a5a"/><circle cx="-240" cy="340" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-240" cy="340" r="20" fill="#7c8a5a"/><circle cx="-80" cy="340" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="-80" cy="340" r="20" fill="#7c8a5a"/><circle cx="80" cy="340" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="80" cy="340" r="20" fill="#7c8a5a"/><circle cx="240" cy="340" r="52" fill="none" stroke="#333a22" stroke-width="6"/>
+      <circle cx="240" cy="340" r="20" fill="#7c8a5a"/></g>
+</svg>
