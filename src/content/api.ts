@@ -186,20 +186,58 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const loadImage = (src: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Could not read that image.'));
+    img.src = src;
+  });
+
+// Downscale large raster images in the browser before upload. Keeps uploads
+// well under the serverless request-size limit and makes the site faster.
+// Vector (SVG) and animated (GIF) files are passed through untouched.
+async function prepareImage(file: File): Promise<{ dataUrl: string; contentType: string }> {
+  const type = file.type || 'image/jpeg';
+  if (type === 'image/svg+xml' || type === 'image/gif') {
+    return { dataUrl: await fileToDataUrl(file), contentType: type };
+  }
+  const original = await fileToDataUrl(file);
+  try {
+    const img = await loadImage(original);
+    const MAX = 1800;
+    const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+    if (scale === 1 && file.size < 1_200_000) return { dataUrl: original, contentType: type };
+
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return { dataUrl: original, contentType: type };
+    ctx.drawImage(img, 0, 0, w, h);
+    const outType = type === 'image/png' ? 'image/png' : 'image/jpeg';
+    return { dataUrl: canvas.toDataURL(outType, 0.85), contentType: outType };
+  } catch {
+    return { dataUrl: original, contentType: type };
+  }
+}
+
 /** Upload an image and return a URL usable as an <img src>. */
 export async function uploadImage(file: File, password: string): Promise<{ ok: boolean; url?: string; error?: string }> {
-  const dataUrl = await fileToDataUrl(file);
+  const { dataUrl, contentType } = await prepareImage(file);
   try {
     const res = await fetch(`${API}/media`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
-      body: JSON.stringify({ name: file.name, contentType: file.type, data: dataUrl }),
+      body: JSON.stringify({ name: file.name, contentType, data: dataUrl }),
     });
     const data = (await readJson(res)) as { url?: string; error?: string } | null;
     if (res.ok && data?.url) return { ok: true, url: data.url };
     if (res.status === 401) return { ok: false, error: 'Incorrect password.' };
     if (data?.error) return { ok: false, error: data.error };
-    // No function (dev) → embed the image directly as a data URL.
+    // No function (dev) → embed the (downscaled) image directly as a data URL.
     return { ok: true, url: dataUrl };
   } catch {
     return { ok: true, url: dataUrl };

@@ -17,8 +17,9 @@ dist-ssr
 .env.*
 !.env.example
 
-# Netlify CLI local state
+# Netlify / Vercel CLI local state
 .netlify/
+.vercel/
 
 # Export archives & loose source drops not needed in the repo
 *.zip
