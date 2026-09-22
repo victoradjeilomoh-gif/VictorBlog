@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LayoutDashboard,
   Images,
+  BookOpen,
   Briefcase,
   ExternalLink,
   LogOut,
@@ -25,7 +26,7 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
-import type { SiteContent, WorkItem, ServiceItem, ProcessStep, Category, NavLink, SocialLink } from './content/types';
+import type { SiteContent, WorkItem, ServiceItem, BookItem, ProcessStep, Category, NavLink, SocialLink } from './content/types';
 import { defaultContent } from './content/defaultContent';
 import { getAuthStatus, saveContent, setPassword as apiSetPassword, uploadImage, verifyPassword } from './content/api';
 import { SocialIcon, SOCIAL_PLATFORMS } from './components/SocialIcon';
@@ -35,6 +36,7 @@ type View =
   | 'brand'
   | 'hero'
   | 'work'
+  | 'books'
   | 'services'
   | 'about'
   | 'process'
@@ -46,6 +48,7 @@ const nav: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'brand', label: 'Brand & menu', icon: Home },
   { id: 'hero', label: 'Hero', icon: Type },
   { id: 'work', label: 'Portfolio', icon: Images },
+  { id: 'books', label: 'Books', icon: BookOpen },
   { id: 'services', label: 'Services', icon: Briefcase },
   { id: 'about', label: 'About', icon: ListOrdered },
   { id: 'process', label: 'Process', icon: Wrench },
@@ -646,6 +649,49 @@ export function Admin({
             </div>
           )}
 
+          {view === 'books' && (
+            <div className="ed-section">
+              <Panel title="Books section text">
+                <div className="ed-grid">
+                  <Field label="Kicker" value={draft.booksSection.kicker} onChange={(v) => patch({ booksSection: { ...draft.booksSection, kicker: v } })} />
+                  <Field label="Heading" value={draft.booksSection.title} onChange={(v) => patch({ booksSection: { ...draft.booksSection, title: v } })} />
+                  <Area label="Intro paragraph" value={draft.booksSection.intro} onChange={(v) => patch({ booksSection: { ...draft.booksSection, intro: v } })} />
+                </div>
+              </Panel>
+
+              <Panel
+                title={`Books (${draft.books.length})`}
+                action={
+                  <button
+                    className="btn-solid sm"
+                    onClick={() => patch({ books: [...draft.books, { id: uid('bk'), title: 'New book', image: '', blurb: '', linkUrl: '', linkLabel: 'Buy / Download' }] })}
+                  >
+                    <Plus size={15} /> Add book
+                  </button>
+                }
+              >
+                <p className="ed-help">Upload each book cover, write a little about it, and paste the link where people can buy or download it. Leave the link blank to hide the button.</p>
+                <div className="card-list">
+                  {draft.books.map((b: BookItem, i) => (
+                    <div className="ed-card" key={b.id}>
+                      <div className="ed-card-head">
+                        <strong>{b.title || 'Untitled book'}</strong>
+                        <RowButtons onUp={() => patch({ books: moveAt(draft.books, i, -1) })} onDown={() => patch({ books: moveAt(draft.books, i, 1) })} onDelete={() => confirm(`Delete “${b.title}”?`) && patch({ books: removeAt(draft.books, i) })} />
+                      </div>
+                      <ImageField label="Book cover" value={b.image} password={password} onChange={(v) => patch({ books: updateItem(draft.books, i, { image: v }) })} />
+                      <div className="ed-grid">
+                        <Field label="Title" full value={b.title} onChange={(v) => patch({ books: updateItem(draft.books, i, { title: v }) })} />
+                        <Area label="A little about the book" value={b.blurb} onChange={(v) => patch({ books: updateItem(draft.books, i, { blurb: v }) })} />
+                        <Field label="Buy / download link (URL)" full value={b.linkUrl} onChange={(v) => patch({ books: updateItem(draft.books, i, { linkUrl: v }) })} placeholder="https://…" />
+                        <Field label="Button label" value={b.linkLabel} onChange={(v) => patch({ books: updateItem(draft.books, i, { linkLabel: v }) })} placeholder="Buy / Download" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+            </div>
+          )}
+
           {view === 'services' && (
             <div className="ed-section">
               <Panel title="Services section text">
@@ -831,8 +877,8 @@ function RowButtons({ onUp, onDown, onDelete }: { onUp: () => void; onDown: () =
 function Overview({ draft, setView, dirty, onSave }: { draft: SiteContent; setView: (v: View) => void; dirty: boolean; onSave: () => void }) {
   const stats = [
     { label: 'Portfolio pieces', value: draft.work.length, view: 'work' as View },
+    { label: 'Books', value: draft.books.length, view: 'books' as View },
     { label: 'Services', value: draft.services.length, view: 'services' as View },
-    { label: 'Process steps', value: draft.process.length, view: 'process' as View },
     { label: 'Social links', value: draft.social.length, view: 'social' as View },
   ];
   return (

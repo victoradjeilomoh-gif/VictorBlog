@@ -14,10 +14,11 @@ export const defaultContent: SiteContent = {
       'Ghanaian graphic artist and illustrator creating thoughtful work for books, education, culture and communication.',
   },
 
-  brand: { mark: 'VL', name: 'Victor Adjei Lomoh', logo: '' },
+  brand: { mark: 'VL', name: 'Victor Adjei Lomoh', logo: 'assets/logo.jpeg' },
 
   nav: [
     { label: 'Work', href: '#work' },
+    { label: 'Books', href: '#books' },
     { label: 'Services', href: '#services' },
     { label: 'About', href: '#practice' },
     { label: 'Contact', href: '#contact' },
@@ -242,6 +243,56 @@ export const defaultContent: SiteContent = {
         'Structured, low-friction collaboration for clients abroad — clear milestones and approvals, transparent invoicing and a clean handover of rights at the end.',
       includes: ['Flexible timezone coordination', 'Invoicing in USD, GBP, EUR, GHS', 'Contract & IP transfer'],
       image: PHOTO('1451187580459-43490279c0fa'),
+    },
+  ],
+
+  booksSection: {
+    kicker: 'Published books',
+    title: 'Books to read, colour and collect.',
+    intro:
+      'A selection of illustrated and cover-designed titles. Tap any book to buy a copy or download it, and read a little about what’s inside.',
+  },
+
+  books: [
+    {
+      id: 'bk-1',
+      title: 'Book One',
+      image: 'assets/book-1.jpeg',
+      blurb: 'A short description of this book goes here — what it’s about and who it’s for. Edit this from the admin panel.',
+      linkUrl: '',
+      linkLabel: 'Buy / Download',
+    },
+    {
+      id: 'bk-2',
+      title: 'Book Two',
+      image: 'assets/book-2.jpeg',
+      blurb: 'A short description of this book goes here — what it’s about and who it’s for. Edit this from the admin panel.',
+      linkUrl: '',
+      linkLabel: 'Buy / Download',
+    },
+    {
+      id: 'bk-3',
+      title: 'Book Three',
+      image: 'assets/book-3.jpeg',
+      blurb: 'A short description of this book goes here — what it’s about and who it’s for. Edit this from the admin panel.',
+      linkUrl: '',
+      linkLabel: 'Buy / Download',
+    },
+    {
+      id: 'bk-4',
+      title: 'Book Four',
+      image: 'assets/book-4.jpeg',
+      blurb: 'A short description of this book goes here — what it’s about and who it’s for. Edit this from the admin panel.',
+      linkUrl: '',
+      linkLabel: 'Buy / Download',
+    },
+    {
+      id: 'bk-5',
+      title: 'Book Five',
+      image: 'assets/book-5.jpeg',
+      blurb: 'A short description of this book goes here — what it’s about and who it’s for. Edit this from the admin panel.',
+      linkUrl: '',
+      linkLabel: 'Buy / Download',
     },
   ],
 

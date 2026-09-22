@@ -47,10 +47,10 @@ function PublicSite({ content }: { content: SiteContent }) {
   // Scroll reveal: segments slide in when they enter view and out when they leave.
   useEffect(() => {
     const selectors =
-      '.section-heading, .hero-copy, .hero-featured, .service-card, .work-card, .process-grid article, .practice-lead-block, .practice-statement, .contact-details';
+      '.section-heading, .hero-copy, .hero-featured, .service-card, .work-card, .book-card, .process-grid article, .practice-lead-block, .practice-statement, .contact-details';
     const els = Array.from(document.querySelectorAll<HTMLElement>(selectors));
     els.forEach((el) => el.classList.add('reveal'));
-    document.querySelectorAll('.service-grid, .work-grid, .process-grid').forEach((grid) => {
+    document.querySelectorAll('.service-grid, .work-grid, .books-grid, .process-grid').forEach((grid) => {
       Array.from(grid.children).forEach((child, i) => {
         (child as HTMLElement).style.transitionDelay = `${Math.min(i, 8) * 55}ms`;
       });
@@ -239,6 +239,40 @@ function PublicSite({ content }: { content: SiteContent }) {
 
           {content.workSection.note && <p className="work-note">{content.workSection.note}</p>}
         </section>
+
+        {content.books.length > 0 && (
+          <section id="books" className="books-section section-pad">
+            <div className="section-heading">
+              <p className="kicker">{content.booksSection.kicker}</p>
+              <h2>{content.booksSection.title}</h2>
+              <p>{content.booksSection.intro}</p>
+            </div>
+
+            <div className="books-grid">
+              {content.books.map((book) => (
+                <article className="book-card" key={book.id}>
+                  <div className="book-cover">
+                    <img src={book.image} alt={book.title} loading="lazy" onError={onImgError} />
+                  </div>
+                  <div className="book-card-body">
+                    <h3>{book.title}</h3>
+                    {book.blurb && <p>{book.blurb}</p>}
+                    {book.linkUrl && (
+                      <a
+                        className="book-link"
+                        href={book.linkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {book.linkLabel || 'Buy / Download'} <ArrowRight size={15} />
+                      </a>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section id="services" className="services-section section-pad">
           <div className="section-heading">

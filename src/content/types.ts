@@ -28,6 +28,17 @@ export type ServiceItem = {
   image: string;
 };
 
+// A published book with its cover, a short description and an optional outbound
+// link (to buy or download). When `linkUrl` is empty no button is shown.
+export type BookItem = {
+  id: string;
+  title: string;
+  image: string; // cover image
+  blurb: string; // a little about the book
+  linkUrl: string; // where "Buy / Download" points (empty = no button)
+  linkLabel: string; // button text, e.g. "Buy now" or "Download"
+};
+
 export type ProcessStep = {
   id: string;
   number: string;
@@ -76,6 +87,9 @@ export type SiteContent = {
 
   servicesSection: { kicker: string; title: string; intro: string };
   services: ServiceItem[];
+
+  booksSection: { kicker: string; title: string; intro: string };
+  books: BookItem[];
 
   about: {
     kicker: string;
