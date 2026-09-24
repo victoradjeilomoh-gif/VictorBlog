@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   Globe2,
   Mail,
   Menu,
@@ -38,6 +39,7 @@ function ContactForm({ content }: { content: SiteContent }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle');
+  const [lastWa, setLastWa] = useState('');
 
   const set = (k: keyof typeof emptyForm) => (v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -81,7 +83,9 @@ function ContactForm({ content }: { content: SiteContent }) {
     } catch {
       /* WhatsApp still opens even if saving failed */
     }
-    window.open(waLink(c.whatsappNumber, lines.join('\n')), '_blank', 'noopener');
+    const url = waLink(c.whatsappNumber, lines.join('\n'));
+    setLastWa(url);
+    window.open(url, '_blank', 'noopener');
     setStatus('done');
     setForm(emptyForm);
   };
@@ -149,9 +153,16 @@ function ContactForm({ content }: { content: SiteContent }) {
       </div>
 
       {status === 'done' && (
-        <p className="cf-success" role="status">
-          <CheckCircle2 size={17} /> {content.contact.formSuccessMessage}
-        </p>
+        <div className="cf-success" role="status">
+          <p>
+            <CheckCircle2 size={17} /> {content.contact.formSuccessMessage}
+          </p>
+          {lastWa && (
+            <a className="cf-reopen" href={lastWa} target="_blank" rel="noreferrer">
+              <MessageCircle size={15} /> Reopen WhatsApp
+            </a>
+          )}
+        </div>
       )}
     </form>
   );
@@ -181,6 +192,7 @@ function PublicSite({ content }: { content: SiteContent }) {
   const [filter, setFilter] = useState<string>('all');
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [serviceLb, setServiceLb] = useState<number | null>(null);
+  const [activeSection, setActiveSection] = useState<string>('');
 
   const { work, services, categories, social } = content;
   const filters = [{ id: 'all', label: 'All work' }, ...categories];
@@ -190,6 +202,24 @@ function PublicSite({ content }: { content: SiteContent }) {
   useEffect(() => {
     if (content.site.title) document.title = content.site.title;
   }, [content.site.title]);
+
+  // Highlight the nav link of the section currently on screen.
+  useEffect(() => {
+    const sections = content.nav
+      .map((n) => document.getElementById(n.href.replace('#', '')))
+      .filter(Boolean) as HTMLElement[];
+    if (sections.length === 0 || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setActiveSection(`#${e.target.id}`);
+        });
+      },
+      { rootMargin: '-35% 0px -55% 0px' },
+    );
+    sections.forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, [content]);
 
   // Scroll reveal: segments slide in when they enter view and out when they leave.
   useEffect(() => {
@@ -264,7 +294,7 @@ function PublicSite({ content }: { content: SiteContent }) {
 
         <nav className="desktop-nav" aria-label="Main navigation">
           {content.nav.map((n) => (
-            <a key={n.href} href={n.href}>{n.label}</a>
+            <a key={n.href} href={n.href} className={activeSection === n.href ? 'is-active' : ''}>{n.label}</a>
           ))}
         </nav>
 
@@ -296,12 +326,28 @@ function PublicSite({ content }: { content: SiteContent }) {
 
         {menuOpen && (
           <nav className="mobile-nav" aria-label="Mobile navigation">
+            <a
+              className="mobile-wa"
+              href={waLink(content.contact.whatsappNumber, content.contact.whatsappMessage)}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setMenuOpen(false)}
+            >
+              <MessageCircle size={19} /> Chat on WhatsApp
+            </a>
             {content.nav.map((n) => (
               <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)}>
                 {n.label}
                 <ArrowDownRight size={18} />
               </a>
             ))}
+            <a
+              className="mobile-email"
+              href={`mailto:${content.header.ctaEmail}?subject=Project%20enquiry`}
+              onClick={() => setMenuOpen(false)}
+            >
+              <Mail size={17} /> {content.header.ctaLabel}
+            </a>
           </nav>
         )}
       </header>
@@ -313,11 +359,22 @@ function PublicSite({ content }: { content: SiteContent }) {
             <h1>{content.hero.title}</h1>
             <p className="hero-intro">{content.hero.intro}</p>
             <div className="hero-actions">
-              <a className="button button-dark" href="#work">
+              <a
+                className="button button-wa"
+                href={waLink(content.contact.whatsappNumber, content.contact.whatsappMessage)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle size={18} /> {content.hero.secondaryLabel}
+              </a>
+              <a className="button button-ghost" href="#work">
                 {content.hero.primaryLabel} <ArrowRight size={17} />
               </a>
-              <a className="text-link" href="#contact">{content.hero.secondaryLabel}</a>
             </div>
+            <ul className="hero-chips" aria-label="Quick facts">
+              <li><Clock3 size={14} /> Fast replies on WhatsApp</li>
+              <li><Globe2 size={14} /> {content.contact.location}</li>
+            </ul>
             {social.length > 0 && (
               <div className="hero-social" aria-label="Social links">
                 {social.map((s) => (
@@ -474,12 +531,25 @@ function PublicSite({ content }: { content: SiteContent }) {
             <div className="practice-lead-block">
               <p className="practice-lead">{content.about.lead}</p>
               <p>{content.about.body}</p>
-              <a
-                className="text-link"
-                href={`mailto:${content.about.linkEmail}?subject=Portfolio%20request`}
-              >
-                {content.about.linkLabel} <ArrowRight size={16} />
-              </a>
+              <div className="about-links">
+                <a
+                  className="text-link"
+                  href={`mailto:${content.about.linkEmail}?subject=Portfolio%20request`}
+                >
+                  {content.about.linkLabel} <ArrowRight size={16} />
+                </a>
+                <a
+                  className="text-link about-wa"
+                  href={waLink(
+                    content.contact.whatsappNumber,
+                    'Hello Victor, could you send me a relevant portfolio selection?',
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MessageCircle size={15} /> Ask on WhatsApp instead
+                </a>
+              </div>
             </div>
 
             <figure className="practice-statement">
@@ -559,22 +629,60 @@ function PublicSite({ content }: { content: SiteContent }) {
 
       <FloatingWhatsApp content={content} />
 
-      <footer>
-        <span className="footer-mark">
-          {content.brand.logo ? (
-            <img src={content.brand.logo} alt={content.brand.name} />
-          ) : (
-            content.footer.mark
-          )}
-        </span>
-        <p>
-          © {new Date().getFullYear()} {content.footer.name}
-          {' · '}
-          <a className="footer-credit" href="https://solomon-ey.netlify.app/" target="_blank" rel="noreferrer">
-            Developer
-          </a>
-        </p>
-        <a href="#top">Back to top ↑</a>
+      <footer className="site-footer">
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <span className="footer-mark">
+              {content.brand.logo ? (
+                <img src={content.brand.logo} alt={content.brand.name} />
+              ) : (
+                content.footer.mark
+              )}
+            </span>
+            <div>
+              <strong>{content.footer.name}</strong>
+              <p>{content.site.description}</p>
+              {social.length > 0 && (
+                <div className="footer-social">
+                  {social.map((s) => (
+                    <a key={s.id} href={s.url} target="_blank" rel="noreferrer" aria-label={s.label} title={s.label}>
+                      <SocialIcon platform={s.platform} size={17} />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="footer-col">
+            <h4>Explore</h4>
+            {content.nav.map((n) => (
+              <a key={n.href} href={n.href}>{n.label}</a>
+            ))}
+          </div>
+
+          <div className="footer-col">
+            <h4>Get in touch</h4>
+            <a className="footer-wa" href={waLink(content.contact.whatsappNumber, content.contact.whatsappMessage)} target="_blank" rel="noreferrer">
+              <MessageCircle size={15} /> {content.contact.whatsappDisplay}
+            </a>
+            <a href={`mailto:${content.contact.email}`}>
+              <Mail size={15} /> {content.contact.email}
+            </a>
+            <span className="footer-loc"><Globe2 size={15} /> {content.contact.location}</span>
+          </div>
+        </div>
+
+        <div className="footer-bottom">
+          <p>
+            © {new Date().getFullYear()} {content.footer.name}
+            {' · '}
+            <a className="footer-credit" href="https://solomon-ey.netlify.app/" target="_blank" rel="noreferrer">
+              Developer
+            </a>
+          </p>
+          <a href="#top">Back to top ↑</a>
+        </div>
       </footer>
 
       {lightbox !== null && shown[lightbox] && (
@@ -646,14 +754,27 @@ function PublicSite({ content }: { content: SiteContent }) {
                 ))}
               </ul>
 
-              <a
-                className="lb-cta"
-                href={`mailto:${content.contact.email}?subject=${encodeURIComponent(
-                  services[serviceLb].title + ' enquiry',
-                )}`}
-              >
-                Enquire about this <ArrowRight size={15} />
-              </a>
+              <div className="lb-cta-row">
+                <a
+                  className="lb-cta-wa"
+                  href={waLink(
+                    content.contact.whatsappNumber,
+                    `Hello Victor, I'm interested in ${services[serviceLb].title}.`,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MessageCircle size={16} /> Ask about this on WhatsApp
+                </a>
+                <a
+                  className="lb-cta"
+                  href={`mailto:${content.contact.email}?subject=${encodeURIComponent(
+                    services[serviceLb].title + ' enquiry',
+                  )}`}
+                >
+                  Prefer email? <ArrowRight size={15} />
+                </a>
+              </div>
 
               <div className="lb-footer">
                 <button
