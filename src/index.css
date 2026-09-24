@@ -50,6 +50,13 @@ img { display: block; max-width: 100%; }
 .header-cta { justify-self: end; display: inline-flex; align-items: center; gap: 9px; font-size: 0.82rem; font-weight: 700; }
 .header-cta:hover svg { transform: translateX(3px); }
 .header-cta svg { transition: transform 180ms ease; }
+.wa-header-cta {
+  padding: 9px 15px; background: #1faa53; color: var(--white);
+  border: 1px solid #1faa53; transition: background .18s ease, border-color .18s ease;
+}
+.wa-header-cta:hover { background: #168742; border-color: #168742; }
+.wa-header-cta:hover svg { transform: none; }
+.wa-header-cta + .header-cta { margin-left: 14px; }
 .menu-button, .mobile-nav { display: none; }
 
 .hero-section {
@@ -394,6 +401,65 @@ footer p .footer-credit:hover { border-color: var(--gold); }
 .contact-qr img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: var(--white); border: 1px solid var(--line); padding: 12px; }
 .contact-qr figcaption { margin-top: 12px; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
 
+/* WhatsApp floating button */
+.wa-float {
+  position: fixed; right: clamp(14px, 2.5vw, 28px); bottom: clamp(14px, 2.5vw, 28px); z-index: 60;
+  display: inline-flex; align-items: center; gap: 10px; padding: 14px 20px;
+  background: #1faa53; color: var(--white); border-radius: 999px;
+  box-shadow: 0 12px 30px -8px rgba(18, 140, 70, .55);
+  font-weight: 800; font-size: .92rem; letter-spacing: .01em;
+  transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.wa-float:hover { background: #168742; transform: translateY(-3px); box-shadow: 0 18px 36px -10px rgba(18, 140, 70, .6); }
+.wa-float svg { flex: 0 0 auto; }
+@media (max-width: 640px) {
+  .wa-float { padding: 13px 16px; font-size: .84rem; bottom: 14px; right: 14px; }
+}
+
+/* Contact section — WhatsApp row + form */
+.contact-details .contact-wa-row { border-top: 0; padding-top: 4px; }
+.contact-details .contact-wa-row .wa-pill {
+  padding: 8px 14px; background: #1faa53; color: var(--white);
+  font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  transition: background .18s ease;
+}
+.contact-details .contact-wa-row:hover .wa-pill { background: #168742; }
+.contact-details .contact-wa-row:hover > svg:last-child { transform: none; }
+
+.contact-form { width: 100%; max-width: 560px; padding: clamp(24px, 3vw, 36px); background: var(--white); border: 1px solid var(--line); box-shadow: 0 24px 60px -30px rgba(9, 27, 43, .25); }
+.contact-form h3 { margin: 0 0 10px; font-family: "Cormorant Garamond", serif; font-size: clamp(1.5rem, 2.2vw, 2rem); line-height: 1.15; letter-spacing: -.01em; }
+.contact-form .cf-note { margin: 0 0 22px; font-size: .88rem; line-height: 1.65; color: var(--ink-soft); }
+.cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cf-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; margin-bottom: 14px; }
+.cf-field > span { font-size: .66rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.cf-field input, .cf-field select, .cf-field textarea {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--line); background: var(--paper);
+  font: inherit; font-size: .92rem; color: var(--ink); outline: none; transition: border-color .15s ease;
+}
+.cf-field textarea { resize: vertical; line-height: 1.55; }
+.cf-field input:focus, .cf-field select:focus, .cf-field textarea:focus { border-color: var(--gold); }
+.cf-field.has-error input, .cf-field.has-error textarea { border-color: #b3261e; }
+.cf-field em { font-style: normal; font-size: .76rem; color: #b3261e; }
+.cf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 4px; }
+.cf-submit {
+  display: inline-flex; align-items: center; gap: 9px; padding: 13px 22px; cursor: pointer;
+  background: #1faa53; color: var(--white); border: 1px solid #1faa53;
+  font: inherit; font-size: .88rem; font-weight: 800; letter-spacing: .02em;
+  transition: background .18s ease;
+}
+.cf-submit:hover { background: #168742; }
+.cf-submit:disabled { opacity: .6; cursor: default; }
+.cf-direct { display: inline-flex; align-items: center; gap: 7px; font-size: .8rem; font-weight: 700; color: var(--ink-soft); border-bottom: 1px solid transparent; }
+.cf-direct:hover { color: #168742; border-color: #168742; }
+.cf-direct svg { color: #1faa53; }
+.cf-success { display: flex; align-items: flex-start; gap: 9px; margin: 16px 0 0; padding: 12px 14px; background: #e9f6ee; border: 1px solid #bfe3cc; font-size: .86rem; line-height: 1.5; color: #1c6b3a; }
+.cf-success svg { flex: 0 0 auto; margin-top: 2px; }
+
+@media (max-width: 640px) {
+  .cf-grid { grid-template-columns: 1fr; }
+  .contact-form { max-width: none; }
+}
+
 .site-loading { min-height: 100vh; display: grid; place-items: center; background: var(--paper); }
 .site-loading-mark {
   width: 60px; height: 60px; display: grid; place-items: center; border: 1px solid var(--ink);
@@ -500,3 +566,39 @@ footer p .footer-credit:hover { border-color: var(--gold); }
   .social-card .row-buttons { grid-column: 1 / -1; justify-content: flex-end; }
   .admin-top { flex-wrap: wrap; }
 }
+
+/* ===================== Admin: WhatsApp setup =========================== */
+.wa-step-card.is-done { background: #f4faf6; border-color: #cfe7d8; }
+.wa-badge { padding: 4px 10px; font-size: .66rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; background: var(--paper-2); color: #8e5e12; }
+.wa-badge.ok { background: #1faa53; color: #fff; }
+.wa-step-card p { margin: 0 0 10px; font-size: .88rem; line-height: 1.65; color: var(--ink-soft); }
+.wa-step-card p strong { color: var(--ink); }
+.wa-test-link a { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #168742; }
+.wa-test-link a:hover { text-decoration: underline; }
+.wa-steps { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: .88rem; line-height: 1.6; color: var(--ink-soft); }
+.wa-greeting-box { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 16px; background: #fffdf4; border: 1px dashed #d8c48a; }
+.wa-greeting-box > span { font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #8e5e12; }
+.wa-greeting-box blockquote { margin: 0; font-size: .92rem; line-height: 1.6; color: var(--ink); }
+.wa-note { margin: 10px 0 0; font-size: .78rem; color: var(--ink-soft); }
+.btn-line.is-done { border-color: #1faa53; color: #168742; }
+.wa-progress { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.wa-progress-bar { flex: 0 0 min(320px, 60%); height: 8px; background: var(--paper-2); overflow: hidden; }
+.wa-progress-bar > span { display: block; height: 100%; background: #1faa53; transition: width .4s ease; }
+.wa-progress-label { font-size: .82rem; font-weight: 700; color: var(--ink-soft); }
+
+/* ===================== Admin: messages inbox =========================== */
+.inbox-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.inbox-actions > span { margin-right: auto; font-size: .82rem; font-weight: 700; color: var(--ink-soft); }
+.lead-card { gap: 10px; }
+.lead-when { font-size: .74rem; color: #9b9285; white-space: nowrap; }
+.lead-facts { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.lead-facts > span { font-size: .86rem; color: var(--ink); }
+.lead-facts small { display: block; font-size: .62rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #9b9285; }
+.lead-facts a { color: var(--ink); border-bottom: 1px solid var(--line); }
+.lead-facts a:hover { color: #8e5e12; }
+.lead-message { margin: 0; padding: 12px 14px; background: #faf6ee; border-left: 3px solid var(--gold); font-size: .9rem; line-height: 1.6; color: var(--ink); white-space: pre-wrap; }
+.lead-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn-line.sm.danger:hover { border-color: #b3261e; color: #b3261e; }
+.btn-solid.sm { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; font-size: .78rem; background: #1faa53; }
+.btn-solid.sm:hover { background: #168742; }
+.wa-progress-panel { margin-bottom: 18px; }

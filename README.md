@@ -29,7 +29,8 @@ See **[ADMIN-AND-DEPLOY.md](ADMIN-AND-DEPLOY.md)** for:
 | Styling | Tailwind CSS v4 + custom theme (`src/index.css`) |
 | Content model | `src/content/types.ts`, defaults in `src/content/defaultContent.ts` |
 | Content API (client) | `src/content/api.ts` — talks to `/api/*`, downscales images, falls back to localStorage in dev |
-| Backend (Vercel) | `api/` — `content`, `auth`, `login`, `media`; storage = Upstash Redis (content + password) + Vercel Blob (images) |
+| WhatsApp | floating button + header button + contact form → `wa.me` deep link; enquiries saved via `/api/leads` |
+| Backend (Vercel) | `api/` — `content`, `auth`, `login`, `media`, `leads`; storage = Upstash Redis (content + password + enquiries) + Vercel Blob (images) |
 | Backend (Netlify) | `netlify/functions/` — same endpoints; storage = Netlify Blobs |
 | Admin login | Password set on first run at `/#admin`, stored hashed — no env var needed |
 | Front page | `src/App.tsx` (renders entirely from content) |
@@ -56,10 +57,11 @@ api/                   # Vercel backend
   auth.ts              # first-run set / change admin password
   login.ts             # verify admin password
   media.ts             # image upload → Vercel Blob (returns public URL)
+  leads.ts             # contact-form enquiries: public POST, protected GET/DELETE
   _lib/                # shared Redis client + auth helpers
 vercel.json            # Vercel build + SPA config
 
 netlify/functions/     # Netlify backend (same endpoints, Netlify Blobs)
-  content.mts  media.mts  auth.mts  login.mts  _auth.mts
+  content.mts  media.mts  auth.mts  login.mts  leads.mts  _auth.mts
 netlify.toml
 ```

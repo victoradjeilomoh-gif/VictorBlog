@@ -3,15 +3,17 @@ import { Admin } from './Admin';
 import {
   ArrowDownRight,
   ArrowRight,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Globe2,
   Mail,
   Menu,
   MessageCircle,
+  Send,
   X,
 } from 'lucide-react';
-import { loadContent } from './content/api';
+import { loadContent, submitLead } from './content/api';
 import { defaultContent } from './content/defaultContent';
 import type { SiteContent } from './content/types';
 import { SocialIcon } from './components/SocialIcon';
@@ -28,6 +30,151 @@ const onImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
 
 const waLink = (number: string, message: string) =>
   `https://wa.me/${number.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+
+// Contact-form state shared by the form + WhatsApp handoff.
+const emptyForm = { name: '', email: '', phone: '', service: '', message: '' };
+
+function ContactForm({ content }: { content: SiteContent }) {
+  const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle');
+
+  const set = (k: keyof typeof emptyForm) => (v: string) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    setErrors((e) => ({ ...e, [k]: '' }));
+  };
+
+  // Save the enquiry to Victor's records (admin inbox) and open WhatsApp with
+  // the customer's details pre-filled. Both happen together.
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs: Record<string, string> = {};
+    if (!form.name.trim()) errs.name = 'Please enter your name.';
+    if (!form.phone.trim() && !form.email.trim()) errs.phone = 'Add a phone/WhatsApp number or an email so Victor can reply.';
+    if (!form.message.trim()) errs.message = 'Please write a short message.';
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setStatus('sending');
+    const c = content.contact;
+    const lines = [
+      `Hello Victor, my name is ${form.name.trim()}.`,
+      form.service ? `I am interested in: ${form.service}.` : '',
+      form.message.trim(),
+      '',
+      form.email ? `Email: ${form.email.trim()}` : '',
+      form.phone ? `Phone/WhatsApp: ${form.phone.trim()}` : '',
+      '— sent from your website contact form',
+    ].filter(Boolean);
+
+    try {
+      await submitLead(
+        {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          service: form.service,
+          message: form.message.trim(),
+        },
+        c.whatsappNumber,
+      );
+    } catch {
+      /* WhatsApp still opens even if saving failed */
+    }
+    window.open(waLink(c.whatsappNumber, lines.join('\n')), '_blank', 'noopener');
+    setStatus('done');
+    setForm(emptyForm);
+  };
+
+  const field = (
+    key: keyof typeof emptyForm,
+    label: string,
+    props: React.InputHTMLAttributes<HTMLInputElement> = {},
+  ) => (
+    <label className={`cf-field${errors[key] ? ' has-error' : ''}`}>
+      <span>{label}</span>
+      <input
+        value={form[key]}
+        onChange={(e) => set(key)(e.target.value)}
+        {...props}
+      />
+      {errors[key] && <em>{errors[key]}</em>}
+    </label>
+  );
+
+  return (
+    <form className="contact-form" onSubmit={submit} noValidate>
+      <h3>{content.contact.formHeading}</h3>
+      {content.contact.formNote && <p className="cf-note">{content.contact.formNote}</p>}
+
+      <div className="cf-grid">
+        {field('name', 'Your name *', { autoComplete: 'name', placeholder: 'e.g. Ama Mensah' })}
+        {field('email', 'Email address', { type: 'email', autoComplete: 'email', placeholder: 'you@example.com' })}
+        {field('phone', 'Phone / WhatsApp number', { type: 'tel', autoComplete: 'tel', placeholder: 'e.g. +233 55 000 0000' })}
+        <label className="cf-field">
+          <span>I’m interested in</span>
+          <select value={form.service} onChange={(e) => set('service')(e.target.value)}>
+            <option value="">Choose one (optional)</option>
+            {content.contact.formServices.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <label className={`cf-field${errors.message ? ' has-error' : ''}`}>
+        <span>Your message *</span>
+        <textarea
+          rows={4}
+          value={form.message}
+          onChange={(e) => set('message')(e.target.value)}
+          placeholder="Tell Victor about your project…"
+        />
+        {errors.message && <em>{errors.message}</em>}
+      </label>
+
+      <div className="cf-actions">
+        <button type="submit" className="cf-submit" disabled={status === 'sending'}>
+          <Send size={16} />
+          {status === 'sending' ? 'Sending…' : content.contact.formSubmitLabel}
+        </button>
+        <a
+          className="cf-direct"
+          href={waLink(content.contact.whatsappNumber, content.contact.whatsappMessage)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <MessageCircle size={16} /> Or chat directly on WhatsApp
+        </a>
+      </div>
+
+      {status === 'done' && (
+        <p className="cf-success" role="status">
+          <CheckCircle2 size={17} /> {content.contact.formSuccessMessage}
+        </p>
+      )}
+    </form>
+  );
+}
+
+function FloatingWhatsApp({ content }: { content: SiteContent }) {
+  const number = content.contact.whatsappNumber.replace(/[^\d]/g, '');
+  if (!content.whatsappButton.enabled || !number) return null;
+  return (
+    <a
+      className="wa-float"
+      href={waLink(content.contact.whatsappNumber, content.contact.whatsappMessage)}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`Chat with Victor on WhatsApp: ${content.contact.whatsappDisplay || number}`}
+    >
+      <svg viewBox="0 0 32 32" width="27" height="27" aria-hidden="true" fill="currentColor">
+        <path d="M16 3C9.4 3 4 8.3 4 14.9c0 2.6.8 5 2.3 7L4 29l7.4-2.3c1.9 1 4 1.6 6.3 1.6h.3c6.6 0 12-5.3 12-11.9S22.6 3 16 3zm5.9 16.6c-.3.8-1.7 1.6-2.3 1.6-.6.1-1.4.1-2.2-.1-.5-.2-1.2-.4-2-.8-3.5-1.5-5.8-5-6-5.3-.2-.2-1.4-1.9-1.4-3.6 0-1.7.9-2.6 1.2-2.9.3-.3.7-.4 1-.4h.7c.2 0 .5-.1.8.6.3.8 1.1 2.6 1.2 2.8.1.2.1.4 0 .7-.1.2-.2.5-.4.7l-.6.7c-.2.2-.4.4-.2.8.2.4 1 1.7 2.2 2.7 1.5 1.3 2.8 1.8 3.2 2 .4.2.6.1.9-.1.2-.3 1-1.2 1.3-1.6.3-.4.5-.3.9-.2.4.1 2.4 1.1 2.8 1.3.4.2.7.3.8.5.1.2.1 1-.2 1.8z" />
+      </svg>
+      {content.whatsappButton.label && <span>{content.whatsappButton.label}</span>}
+    </a>
+  );
+}
 
 function PublicSite({ content }: { content: SiteContent }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -120,6 +267,16 @@ function PublicSite({ content }: { content: SiteContent }) {
             <a key={n.href} href={n.href}>{n.label}</a>
           ))}
         </nav>
+
+        <a
+          className="header-cta wa-header-cta"
+          href={waLink(content.contact.whatsappNumber, content.contact.whatsappMessage)}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Contact Victor on WhatsApp"
+        >
+          <MessageCircle size={16} /> WhatsApp
+        </a>
 
         <a
           className="header-cta"
@@ -356,18 +513,22 @@ function PublicSite({ content }: { content: SiteContent }) {
           </div>
           <div className="contact-layout">
             <div className="contact-details">
-              <a href={`mailto:${content.contact.email}?subject=Project%20enquiry`}>
-                <Mail size={19} />
-                <span><small>Email</small>{content.contact.email}</span>
-                <ArrowRight size={19} />
-              </a>
               <a
+                className="contact-wa-row"
                 href={waLink(content.contact.whatsappNumber, content.contact.whatsappMessage)}
                 target="_blank"
                 rel="noreferrer"
               >
                 <MessageCircle size={19} />
-                <span><small>WhatsApp</small>{content.contact.whatsappDisplay}</span>
+                <span>
+                  <small>WhatsApp — fastest reply</small>
+                  {content.contact.whatsappDisplay}
+                </span>
+                <span className="wa-pill">Chat now</span>
+              </a>
+              <a href={`mailto:${content.contact.email}?subject=Project%20enquiry`}>
+                <Mail size={19} />
+                <span><small>Email</small>{content.contact.email}</span>
                 <ArrowRight size={19} />
               </a>
               <div className="location-line"><Globe2 size={18} /> {content.contact.location}</div>
@@ -384,6 +545,8 @@ function PublicSite({ content }: { content: SiteContent }) {
               )}
             </div>
 
+            <ContactForm content={content} />
+
             {content.contact.qrImage && (
               <figure className="contact-qr">
                 <img src={content.contact.qrImage} alt={content.contact.qrCaption} onError={onImgError} />
@@ -393,6 +556,8 @@ function PublicSite({ content }: { content: SiteContent }) {
           </div>
         </section>
       </main>
+
+      <FloatingWhatsApp content={content} />
 
       <footer>
         <span className="footer-mark">

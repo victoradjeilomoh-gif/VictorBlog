@@ -178,6 +178,107 @@ export async function verifyPassword(password: string): Promise<{ ok: boolean; l
   return { ok: password.trim().length > 0, local: true }; // not configured yet in dev
 }
 
+// ---- Contact-form enquiries (“leads”) -------------------------------------
+// The public contact form POSTs here (saved server-side so Victor keeps a copy
+// of every enquiry) and the admin inbox reads/deletes them.
+
+export type Lead = {
+  id: string;
+  at: number; // epoch ms
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  message: string;
+};
+
+const LS_LEADS = 'val-leads-v1';
+
+const readLocalLeads = (): Lead[] => {
+  try {
+    const raw = localStorage.getItem(LS_LEADS);
+    return raw ? (JSON.parse(raw) as Lead[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalLeads = (leads: Lead[]) => {
+  try {
+    localStorage.setItem(LS_LEADS, JSON.stringify(leads.slice(0, 200)));
+  } catch {
+    /* ignore quota */
+  }
+};
+
+/** Save one contact-form enquiry server-side. Fire-and-forget from the form. */
+export async function submitLead(
+  lead: Omit<Lead, 'id' | 'at'>,
+  whatsappNumber: string,
+): Promise<{ ok: boolean; error?: string }> {
+  // Dev/no-backend fallback: keep the enquiry in this browser only. A lead is
+  // still only “real” once it has been sent to WhatsApp — this is a backup.
+  const saveLocal = () => {
+    const local: Lead = { ...lead, id: `local-${Date.now().toString(36)}`, at: Date.now() };
+    writeLocalLeads([local, ...readLocalLeads()]);
+    return { ok: true, local: true } as const;
+  };
+
+  try {
+    const res = await fetch(`${API}/leads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...lead, whatsappNumber }),
+    });
+    const data = (await readJson(res)) as { ok?: boolean; error?: string } | null;
+    if (res.ok && data?.ok) return { ok: true };
+    if (data?.error) return { ok: false, error: data.error };
+    // Non-JSON response → function not deployed (plain vite dev). Fall back.
+    return saveLocal();
+  } catch {
+    // Network/function unavailable → local fallback.
+    return saveLocal();
+  }
+}
+
+/** List all saved enquiries (admin inbox). Requires the admin password. */
+export async function fetchLeads(password: string): Promise<{ leads: Lead[]; error?: string; local?: boolean }> {
+  try {
+    const res = await fetch(`${API}/leads`, {
+      headers: { 'x-admin-password': password },
+      cache: 'no-store',
+    });
+    if (res.status === 401) return { leads: [], error: 'Incorrect password.' };
+    const data = (await readJson(res)) as { leads?: Lead[]; error?: string } | null;
+    if (res.ok && data?.leads) return { leads: data.leads };
+    if (data?.error) return { leads: [], error: data.error };
+  } catch {
+    /* no function — dev */
+  }
+  return { leads: readLocalLeads(), local: true };
+}
+
+/** Delete one enquiry from the server inbox. Requires the admin password. */
+export async function deleteLead(
+  id: string,
+  password: string,
+): Promise<{ ok: boolean; error?: string; local?: boolean }> {
+  try {
+    const res = await fetch(`${API}/leads?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-password': password },
+    });
+    const data = (await readJson(res)) as { ok?: boolean; error?: string } | null;
+    if (res.ok && data?.ok) return { ok: true };
+    if (res.status === 401) return { ok: false, error: 'Incorrect password.' };
+    if (data?.error) return { ok: false, error: data.error };
+  } catch {
+    /* no function — dev */
+  }
+  writeLocalLeads(readLocalLeads().filter((l) => l.id !== id));
+  return { ok: true, local: true };
+}
+
 const fileToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();

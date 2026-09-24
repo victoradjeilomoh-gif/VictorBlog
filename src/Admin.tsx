@@ -25,10 +25,17 @@ import {
   Loader,
   RotateCcw,
   X,
+  MessageCircle,
+  Inbox,
+  Download,
+  Copy,
+  Check,
+  RefreshCw,
 } from 'lucide-react';
 import type { SiteContent, WorkItem, ServiceItem, BookItem, ProcessStep, Category, NavLink, SocialLink } from './content/types';
 import { defaultContent } from './content/defaultContent';
-import { getAuthStatus, saveContent, setPassword as apiSetPassword, uploadImage, verifyPassword } from './content/api';
+import { getAuthStatus, saveContent, setPassword as apiSetPassword, uploadImage, verifyPassword, fetchLeads, deleteLead } from './content/api';
+import type { Lead } from './content/api';
 import { SocialIcon, SOCIAL_PLATFORMS } from './components/SocialIcon';
 
 type View =
@@ -41,6 +48,8 @@ type View =
   | 'about'
   | 'process'
   | 'contact'
+  | 'whatsapp'
+  | 'messages'
   | 'social';
 
 const nav: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
@@ -53,6 +62,8 @@ const nav: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'about', label: 'About', icon: ListOrdered },
   { id: 'process', label: 'Process', icon: Wrench },
   { id: 'contact', label: 'Contact & QR', icon: Phone },
+  { id: 'whatsapp', label: 'WhatsApp & form', icon: MessageCircle },
+  { id: 'messages', label: 'Messages (enquiries)', icon: Inbox },
   { id: 'social', label: 'Social links', icon: Share2 },
 ];
 
@@ -212,6 +223,274 @@ function StringList({
         </button>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------ whatsapp */
+
+const waLinkNow = (number: string, message: string) =>
+  `https://wa.me/${number.replace(/[^\d]/g, '')}?text=${encodeURIComponent(message)}`;
+
+const leadWaLink = (lead: Lead, number: string) => {
+  const greeting = 'Hi! Thanks for contacting me. I received your message and will get back with you shortly.';
+  return waLinkNow(number, `${greeting}\n\nHello ${lead.name}, thank you for your enquiry${lead.service ? ` about ${lead.service}` : ''}.`);
+};
+
+const fmtWhen = (ms: number) =>
+  new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+function toCsv(leads: Lead[]): string {
+  const esc = (v: string) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = [
+    ['Date', 'Name', 'Email', 'Phone / WhatsApp', 'Interested in', 'Message'].join(','),
+    ...leads.map((l) =>
+      [fmtWhen(l.at), l.name, l.email, l.phone, l.service, l.message].map(esc).join(','),
+    ),
+  ];
+  return rows.join('\n');
+}
+
+function downloadCsv(leads: Lead[]) {
+  const blob = new Blob(['\ufeff' + toCsv(leads)], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `victor-enquiries-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Copy-to-clipboard button with a short “Copied” confirmation. */
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      className="btn-line sm"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+        }
+        setDone(true);
+        setTimeout(() => setDone(false), 1800);
+      }}
+    >
+      {done ? <Check size={14} /> : <Copy size={14} />}
+      {done ? 'Copied!' : label}
+    </button>
+  );
+}
+
+/** Step-by-step guide: everything Victor must do once for WhatsApp. */
+function WhatsAppSetup({ draft, onToggleGreeting }: { draft: SiteContent; onToggleGreeting: () => void }) {
+  const number = draft.contact.whatsappNumber.replace(/[^\d]/g, '');
+  const steps: { done: boolean; title: string; body: React.ReactNode }[] = [
+    {
+      done: number.length >= 10,
+      title: '1. WhatsApp number is set on the website',
+      body: (
+        <>
+          <p>
+            Current number: <strong>{draft.contact.whatsappDisplay || '(not set)'}</strong> — change it in{' '}
+            <strong>Contact &amp; QR</strong>. This is the number every button on the site opens.
+          </p>
+          <p className="wa-test-link">
+            <a href={waLinkNow(draft.contact.whatsappNumber, draft.contact.whatsappMessage)} target="_blank" rel="noreferrer">
+              Test it — open your WhatsApp chat <ExternalLink size={13} />
+            </a>
+          </p>
+        </>
+      ),
+    },
+    {
+      done: draft.whatsappGreetingSetupDone,
+      title: '2. Turn on the automatic greeting in WhatsApp',
+      body: (
+        <>
+          <ol className="wa-steps">
+            {draft.whatsappGreetingSteps.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ol>
+          <div className="wa-greeting-box">
+            <span>Your greeting message (ready to copy):</span>
+            <blockquote>{draft.whatsappGreetingText}</blockquote>
+            <CopyButton text={draft.whatsappGreetingText} label="Copy greeting" />
+          </div>
+          <button
+            type="button"
+            className={`btn-line sm${draft.whatsappGreetingSetupDone ? ' is-done' : ''}`}
+            onClick={onToggleGreeting}
+          >
+            {draft.whatsappGreetingSetupDone ? <Check size={14} /> : <CheckCircle2 size={14} />}
+            {draft.whatsappGreetingSetupDone ? 'Greeting is set up ✓ (click to untick)' : 'Mark greeting as set up'}
+          </button>
+          <p className="wa-note">
+            Tick this off after you’ve saved the greeting in WhatsApp, then press <strong>Save changes</strong> at the top.
+          </p>
+        </>
+      ),
+    },
+    {
+      done: false,
+      title: '3. Connect Facebook to WhatsApp',
+      body: (
+        <>
+          <p>
+            On your <strong>Facebook Page</strong>: open the page → <strong>Settings</strong> →{' '}
+            <strong>WhatsApp</strong> (or “Edit action button”) → enter this same number
+            ({draft.contact.whatsappDisplay}) and choose <strong>“Send WhatsApp message”</strong> as the button.
+            Facebook then shows a green WhatsApp button right on the page.
+          </p>
+          <p>
+            Your Facebook page link is on the site under <strong>Social links</strong>. You can also paste a
+            WhatsApp link (the one from step 1) as the page’s button if the automatic option is not offered.
+          </p>
+        </>
+      ),
+    },
+    {
+      done: false, // manual testing — Victor ticks it off in real life
+      title: '4. Test everything once',
+      body: (
+        <ul className="wa-steps">
+          <li>Website → the green floating button opens WhatsApp ✓</li>
+          <li>Website form (Contact section) → arrives in <strong>Messages (enquiries)</strong> here and opens WhatsApp ✓</li>
+          <li>Facebook page → the WhatsApp button opens the same chat ✓</li>
+          <li>Send yourself one test message from each place.</li>
+        </ul>
+      ),
+    },
+  ];
+
+  return (
+    <div className="card-list">
+      {steps.map((s, i) => (
+        <div className={`ed-card wa-step-card${s.done ? ' is-done' : ''}`} key={i}>
+          <div className="ed-card-head">
+            <strong>{s.title}</strong>
+            <span className={`wa-badge${s.done ? ' ok' : ''}`}>{s.done ? 'Done' : 'To do'}</span>
+          </div>
+          {s.body}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Admin inbox: every contact-form enquiry, with one-tap WhatsApp reply. */
+function MessagesInbox({ password, whatsappNumber }: { password: string; whatsappNumber: string }) {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [local, setLocal] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setErr('');
+    const res = await fetchLeads(password);
+    setLeads(res.leads);
+    setLocal(!!res.local);
+    if (res.error) setErr(res.error);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const remove = async (id: string) => {
+    if (!confirm('Delete this enquiry? This cannot be undone.')) return;
+    const res = await deleteLead(id, password);
+    if (res.ok) setLeads((ls) => ls.filter((l) => l.id !== id));
+    else window.alert(res.error || 'Could not delete.');
+  };
+
+  if (loading) {
+    return (
+      <p className="muted-line" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Loader size={16} className="spin" /> Loading enquiries…
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {local && (
+        <p className="ed-help">
+          <strong>Local mode:</strong> there is no live server connected in this browser, so only enquiries
+          sent from <em>this</em> browser are listed. On the live website, every enquiry from every visitor
+          appears here automatically.
+        </p>
+      )}
+      {err && <p className="ed-err-inline">{err}</p>}
+
+      <div className="inbox-actions">
+        <span>
+          {leads.length} {leads.length === 1 ? 'enquiry' : 'enquiries'}
+        </span>
+        <button className="btn-line sm" onClick={load}>
+          <RefreshCw size={14} /> Refresh
+        </button>
+        <button className="btn-line sm" onClick={() => downloadCsv(leads)} disabled={leads.length === 0}>
+          <Download size={14} /> Download as Excel/CSV
+        </button>
+      </div>
+
+      {leads.length === 0 ? (
+        <p className="muted-line">
+          No enquiries yet. Every message sent through the website contact form will appear here — with the
+          person’s name, email, WhatsApp number and question, so you can reply from WhatsApp in one tap.
+        </p>
+      ) : (
+        <div className="card-list">
+          {leads.map((l) => (
+            <div className="ed-card lead-card" key={l.id}>
+              <div className="ed-card-head">
+                <strong>{l.name || '(no name)'}</strong>
+                <span className="lead-when">{fmtWhen(l.at)}</span>
+              </div>
+              <div className="lead-facts">
+                {l.email && (
+                  <span>
+                    <small>Email</small> <a href={`mailto:${l.email}`}>{l.email}</a>
+                  </span>
+                )}
+                {l.phone && (
+                  <span>
+                    <small>Phone / WhatsApp</small> {l.phone}
+                  </span>
+                )}
+                {l.service && (
+                  <span>
+                    <small>Interested in</small> {l.service}
+                  </span>
+                )}
+              </div>
+              <p className="lead-message">{l.message}</p>
+              <div className="lead-actions">
+                {whatsappNumber && (
+                  <a className="btn-solid sm" href={leadWaLink(l, whatsappNumber)} target="_blank" rel="noreferrer">
+                    <MessageCircle size={14} /> Reply on WhatsApp
+                  </a>
+                )}
+                <button className="btn-line sm danger" onClick={() => remove(l.id)}>
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -810,6 +1089,79 @@ export function Admin({
             </div>
           )}
 
+          {view === 'whatsapp' && (
+            <div className="ed-section">
+              <Panel title="WhatsApp setup checklist — do these once">
+                <p className="ed-help">
+                  This is the full WhatsApp connection in four steps. When every box says <strong>Done</strong>,
+                  customers can reach Victor on WhatsApp from the website and Facebook, and every enquiry is
+                  collected under <strong>Messages (enquiries)</strong>.
+                </p>
+                <WhatsAppSetup
+                  draft={draft}
+                  onToggleGreeting={() =>
+                    patch({ whatsappGreetingSetupDone: !draft.whatsappGreetingSetupDone })
+                  }
+                />
+              </Panel>
+
+              <Panel title="Floating WhatsApp button (green button on every page)">
+                <div className="ed-grid">
+                  <label className="ed-field">
+                    <span>Show the floating button</span>
+                    <select
+                      value={draft.whatsappButton.enabled ? 'yes' : 'no'}
+                      onChange={(e) => patch({ whatsappButton: { ...draft.whatsappButton, enabled: e.target.value === 'yes' } })}
+                    >
+                      <option value="yes">Yes — always visible</option>
+                      <option value="no">No — hide it</option>
+                    </select>
+                  </label>
+                  <Field
+                    label="Text next to the WhatsApp icon (leave blank for icon only)"
+                    value={draft.whatsappButton.label}
+                    onChange={(v) => patch({ whatsappButton: { ...draft.whatsappButton, label: v } })}
+                  />
+                </div>
+              </Panel>
+
+              <Panel title="Automatic greeting message (copy into WhatsApp)">
+                <div className="ed-grid">
+                  <Area
+                    label="Greeting text — WhatsApp sends this automatically to new chats"
+                    value={draft.whatsappGreetingText}
+                    onChange={(v) => patch({ whatsappGreetingText: v })}
+                  />
+                </div>
+                <div className="wa-greeting-box" style={{ marginTop: 12 }}>
+                  <CopyButton text={draft.whatsappGreetingText} label="Copy greeting" />
+                </div>
+              </Panel>
+
+              <Panel title="Pre-filled first message (what customers send Victor)">
+                <div className="ed-grid">
+                  <Area
+                    label="Message the customer sends when they tap a WhatsApp button"
+                    value={draft.contact.whatsappMessage}
+                    onChange={(v) => patch({ contact: { ...draft.contact, whatsappMessage: v } })}
+                  />
+                </div>
+              </Panel>
+            </div>
+          )}
+
+          {view === 'messages' && (
+            <div className="ed-section">
+              <Panel title="Customer enquiries from the website form">
+                <p className="ed-help">
+                  Every contact-form submission is saved here and can also be opened straight in WhatsApp.
+                  Reply with the green button — WhatsApp opens with a polite greeting already typed.
+                </p>
+                <MessagesInbox password={password} whatsappNumber={draft.contact.whatsappNumber} />
+              </Panel>
+            </div>
+          )}
+
           {view === 'social' && (
             <div className="ed-section">
               <Panel
@@ -875,6 +1227,12 @@ function RowButtons({ onUp, onDown, onDelete }: { onUp: () => void; onDown: () =
 }
 
 function Overview({ draft, setView, dirty, onSave }: { draft: SiteContent; setView: (v: View) => void; dirty: boolean; onSave: () => void }) {
+  const waNumber = draft.contact.whatsappNumber.replace(/[^\d]/g, '');
+  const waChecks = [
+    waNumber.length >= 10,
+    draft.whatsappGreetingSetupDone,
+  ];
+  const waDone = waChecks.filter(Boolean).length;
   const stats = [
     { label: 'Portfolio pieces', value: draft.work.length, view: 'work' as View },
     { label: 'Books', value: draft.books.length, view: 'books' as View },
@@ -892,6 +1250,32 @@ function Overview({ draft, setView, dirty, onSave }: { draft: SiteContent; setVi
           </button>
         ))}
       </div>
+      <section className="panel wa-progress-panel">
+        <div className="panel-head">
+          <h2>WhatsApp connection</h2>
+          <button className="btn-line sm" onClick={() => setView('whatsapp')}>
+            <MessageCircle size={14} /> Open setup checklist
+          </button>
+        </div>
+        <p className="muted-line" style={{ lineHeight: 1.7 }}>
+          Customers can contact Victor on WhatsApp from every page, and every contact-form enquiry is saved
+          to <strong>Messages (enquiries)</strong>. Setup status:
+        </p>
+        <div className="wa-progress">
+          <span className="wa-progress-bar">
+            <span style={{ width: `${Math.round((waDone / waChecks.length) * 100)}%` }} />
+          </span>
+          <span className="wa-progress-label">
+            {waDone === waChecks.length ? '✓ Fully connected' : `${waDone} of ${waChecks.length} steps done`}
+          </span>
+        </div>
+        {waDone < waChecks.length && (
+          <button className="btn-solid" style={{ marginTop: 14 }} onClick={() => setView('whatsapp')}>
+            <MessageCircle size={16} /> Finish WhatsApp setup
+          </button>
+        )}
+      </section>
+
       <div className="admin-cols">
         <section className="panel">
           <div className="panel-head"><h2>Welcome</h2></div>
@@ -913,6 +1297,8 @@ function Overview({ draft, setView, dirty, onSave }: { draft: SiteContent; setVi
             <button onClick={() => setView('hero')}><Type size={16} /> Edit hero</button>
             <button onClick={() => setView('work')}><Images size={16} /> Manage portfolio</button>
             <button onClick={() => setView('contact')}><Phone size={16} /> Contact & QR</button>
+            <button onClick={() => setView('whatsapp')}><MessageCircle size={16} /> WhatsApp &amp; form</button>
+            <button onClick={() => setView('messages')}><Inbox size={16} /> Customer messages</button>
             <button onClick={() => setView('social')}><Share2 size={16} /> Social links</button>
           </div>
         </section>

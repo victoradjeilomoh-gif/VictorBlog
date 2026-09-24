@@ -331,7 +331,25 @@ export const defaultContent: SiteContent = {
     location: 'Accra, Ghana · Available worldwide',
     qrImage: 'assets/qr-code.jpeg',
     qrCaption: 'Scan to save my contact',
+    formHeading: 'Send a message — it goes straight to Victor’s WhatsApp',
+    formNote: 'Fill this in and your details reach Victor instantly on WhatsApp — with your name, email and number attached so he can get back to you.',
+    formSuccessMessage: 'Thank you! Your message is on its way to Victor’s WhatsApp. If WhatsApp did not open, tap the green button below.',
+    formServices: ['Custom illustration', 'Book illustration', 'Colouring-book artwork', 'Character design', 'Book cover concepts', 'Promotional graphics', 'Something else'],
+    formSubmitLabel: 'Send via WhatsApp',
   },
+
+  whatsappButton: { enabled: true, label: 'Chat on WhatsApp' },
+
+  whatsappGreetingSetupDone: false,
+  whatsappGreetingText:
+    'Hi! Thanks for contacting me. I received your message and will get back with you shortly. — Victor Adjei Lomoh',
+  whatsappGreetingSteps: [
+    'Open WhatsApp on your phone (the one with the number shown on the website).',
+    'Tap Settings (⋮ on Android, ⚙︎ on iPhone) → Business tools → Greeting message.',
+    'Turn “Send greeting message” ON.',
+    'Set “Recipients” to Everyone.',
+    'Paste the greeting text below into the message box and save.',
+  ],
 
   social: [
     { id: 'soc-fb', platform: 'facebook', label: 'Facebook', url: 'https://www.facebook.com/profile.php?id=61594548813874' },

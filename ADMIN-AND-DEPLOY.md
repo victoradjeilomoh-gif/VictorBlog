@@ -9,6 +9,44 @@ The site runs on **Vercel** (the primary setup below). It can also run on Netlif
 
 ---
 
+## 0. WhatsApp setup (do this once — plain English)
+
+The goal: **someone finds the site → taps WhatsApp → chats with Victor → the
+enquiry is saved for follow-up.** Everything below is done in the admin panel
+(`/#admin` → **WhatsApp & form**), plus one setting inside WhatsApp itself.
+
+1. **Check the WhatsApp number** — Admin → **Contact & QR** → “WhatsApp number”.
+   This one number powers every button on the site (the green floating button,
+   the header button, and the contact section).
+2. **Turn on the automatic greeting in WhatsApp** — in the admin → **WhatsApp &
+   form** there is a ready-made greeting and a **Copy greeting** button. Open
+   WhatsApp on Victor's phone → Settings → Business tools → Greeting message →
+   turn it ON, set Recipients to *Everyone*, paste the greeting, save. Then tick
+   “Mark greeting as set up” in the admin and press **Save changes**.
+3. **Connect Facebook to WhatsApp** — on Victor's Facebook Page: **Settings →
+   WhatsApp**, enter the same number, and set the page button to **“Send
+   WhatsApp message”**. (Facebook support changes sometimes; if the option isn't
+   there, use “Edit action button” → WhatsApp. This step is done on Facebook,
+   not in the website admin.)
+4. **Test everything once** —
+   - Website → green floating button → WhatsApp chat opens ✓
+   - Website → contact form → message appears in Admin → **Messages
+     (enquiries)** AND a WhatsApp chat opens with the customer's details
+     pre-filled ✓
+   - Facebook → WhatsApp button opens the same chat ✓
+
+**Where customer details live:** every form submission is saved to Admin →
+**Messages (enquiries)** — name, email, WhatsApp number, what they're
+interested in and their message. From there Victor can reply on WhatsApp with
+one tap (a polite greeting is pre-typed) or download all enquiries as a
+CSV/Excel file.
+
+The contact form itself, the floating button and the pre-filled message are all
+editable in Admin → **WhatsApp & form** (and Admin → **Contact & QR** for the
+number itself). Everything works on both Vercel and Netlify.
+
+---
+
 ## 1. How the admin works
 
 - Open the admin by adding **`#admin`** to the site address, e.g.
@@ -22,6 +60,8 @@ The site runs on **Vercel** (the primary setup below). It can also run on Netlif
   - **Services** – the service cards, images and "what's included" lists
   - **About**, **Process** – the wording of those sections
   - **Contact & QR** – email, WhatsApp, location and the "Scan to save my contact" QR image
+  - **WhatsApp & form** – the WhatsApp setup checklist, floating button, automatic greeting and the pre-filled message customers send
+  - **Messages (enquiries)** – every contact-form submission (name, email, WhatsApp number, message) with one-tap WhatsApp reply and CSV/Excel export
   - **Social links** – Facebook, Instagram, etc. (the icon is chosen from the platform)
 - **Uploading images:** in any image field click **Upload image** and pick a file.
   Large photos are automatically downscaled in your browser before upload, then

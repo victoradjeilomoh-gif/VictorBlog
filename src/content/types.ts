@@ -117,7 +117,26 @@ export type SiteContent = {
     location: string;
     qrImage: string; // "Scan to save my contact" QR image
     qrCaption: string;
+    // Contact form (submissions are saved to the admin "Messages" inbox and
+    // can also be sent straight to Victor's WhatsApp).
+    formHeading: string;
+    formNote: string;
+    formSuccessMessage: string;
+    formServices: string[]; // options for the "what are you interested in?" dropdown
+    formSubmitLabel: string;
   };
+
+  // Big green floating WhatsApp button shown on every page (bottom corner).
+  whatsappButton: {
+    enabled: boolean;
+    label: string; // text next to the icon; empty = icon only
+  };
+
+  // True when Victor has set up / confirmed the WhatsApp greeting below.
+  whatsappGreetingSetupDone: boolean;
+  // Step-by-step instructions shown in the admin for the automatic greeting.
+  whatsappGreetingText: string; // the greeting itself, ready to copy & paste into WhatsApp
+  whatsappGreetingSteps: string[]; // instructions shown in the admin
 
   social: SocialLink[];
 
