@@ -57,6 +57,11 @@ export type SocialLink = {
 export type SiteContent = {
   __version: number;
 
+  // Which public design the site uses. Changed from Admin → "Site look".
+  // "editorial" = warm light magazine · "poster" = bold dark punchy ·
+  // "gallery" = refined dark navy/gold.
+  designTheme: 'editorial' | 'poster' | 'gallery';
+
   site: { title: string; description: string };
 
   // `mark` is the monogram fallback (e.g. "VL"); `logo` is an optional uploaded

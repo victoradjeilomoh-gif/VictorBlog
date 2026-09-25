@@ -54,6 +54,12 @@ number itself). Everything works on both Vercel and Netlify.
 - **The very first time**, you'll be asked to **create an admin password** (see
   step 4). After that, you just sign in with it.
 - Use the left-hand menu to edit each part of the site:
+  - **Site look** – switch the whole design between three complete looks:
+    **Warm editorial** (bright cream + orange serif), **Bold poster** (near-black,
+    huge uppercase type) and **Refined gallery** (deep navy + gold serif).
+    Click a card, press **Save changes**, and the live site switches instantly —
+    all text, images and WhatsApp features stay exactly the same. You can change
+    it as often as you like.
   - **Brand & menu** – site title/SEO, logo monogram, navigation links, marquee, footer
   - **Hero** – the big opening headline, intro and featured image
   - **Portfolio** – add / edit / delete / reorder pieces, upload artwork, set categories

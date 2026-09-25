@@ -8,6 +8,9 @@ const PHOTO = (id: string, w = 900, h = 600) =>
 export const defaultContent: SiteContent = {
   __version: 1,
 
+  // Which of the three looks the public site uses (Admin → "Site look").
+  designTheme: 'gallery',
+
   site: {
     title: 'Victor Adjei Lomoh — Artist & Illustrator',
     description:

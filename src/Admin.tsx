@@ -31,6 +31,7 @@ import {
   Copy,
   Check,
   RefreshCw,
+  Palette,
 } from 'lucide-react';
 import type { SiteContent, WorkItem, ServiceItem, BookItem, ProcessStep, Category, NavLink, SocialLink } from './content/types';
 import { defaultContent } from './content/defaultContent';
@@ -40,6 +41,7 @@ import { SocialIcon, SOCIAL_PLATFORMS } from './components/SocialIcon';
 
 type View =
   | 'overview'
+  | 'look'
   | 'brand'
   | 'hero'
   | 'work'
@@ -54,6 +56,7 @@ type View =
 
 const nav: { id: View; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'look', label: 'Site look', icon: Palette },
   { id: 'brand', label: 'Brand & menu', icon: Home },
   { id: 'hero', label: 'Hero', icon: Type },
   { id: 'work', label: 'Portfolio', icon: Images },
@@ -222,6 +225,100 @@ function StringList({
           <Plus size={14} /> Add
         </button>
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------- site look */
+
+/** Visual theme picker — three complete looks, switchable any time. */
+function ThemePicker({ value, onChange }: { value: string; onChange: (t: 'editorial' | 'poster' | 'gallery') => void }) {
+  const themes: {
+    id: 'editorial' | 'poster' | 'gallery';
+    name: string;
+    desc: string;
+    swatches: string[];
+    mini: React.ReactNode;
+  }[] = [
+    {
+      id: 'editorial',
+      name: 'Warm editorial',
+      desc: 'Bright cream paper, warm orange serif, friendly magazine feel. Welcoming and artsy.',
+      swatches: ['#f7f2e9', '#b4551e', '#1faa53'],
+      mini: (
+        <div className="mini-site mini-editorial">
+          <div className="mini-nav"><span>Victor Adjei Lomoh</span><i /></div>
+          <div className="mini-body">
+            <div className="mini-kicker">Illustration studio</div>
+            <div className="mini-head">Stories made <em>visible.</em></div>
+            <div className="mini-chips"><span /><span /></div>
+          </div>
+          <div className="mini-img" />
+        </div>
+      ),
+    },
+    {
+      id: 'poster',
+      name: 'Bold poster',
+      desc: 'Near-black stage, huge uppercase type, sharp corners. Confident — the artwork pops like a poster.',
+      swatches: ['#0c0c0e', '#22b45e', '#f2f2f0'],
+      mini: (
+        <div className="mini-site mini-poster">
+          <div className="mini-nav"><span>VICTOR A.L</span><i /></div>
+          <div className="mini-body">
+            <div className="mini-kicker">Illustrator — Accra</div>
+            <div className="mini-head">STORIES<br />MADE VISIBLE</div>
+            <div className="mini-chips"><span /><span /></div>
+          </div>
+          <div className="mini-img" />
+        </div>
+      ),
+    },
+    {
+      id: 'gallery',
+      name: 'Refined gallery',
+      desc: 'Calm deep navy, elegant gold serif, generous whitespace. Quiet-luxury gallery feel.',
+      swatches: ['#0e1520', '#d9a441', '#22b45e'],
+      mini: (
+        <div className="mini-site mini-gallery">
+          <div className="mini-nav"><span>Victor Adjei Lomoh</span><i /></div>
+          <div className="mini-body">
+            <div className="mini-kicker">Illustration studio</div>
+            <div className="mini-head">Stories made <em>visible.</em></div>
+            <div className="mini-chips"><span /><span /></div>
+          </div>
+          <div className="mini-img" />
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="theme-cards">
+      {themes.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          className={`theme-card${value === t.id ? ' is-selected' : ''}`}
+          onClick={() => onChange(t.id)}
+          aria-pressed={value === t.id}
+        >
+          {value === t.id && (
+            <span className="theme-check"><Check size={13} /> Live</span>
+          )}
+          <div className="theme-mini">{t.mini}</div>
+          <div className="theme-meta">
+            <span className="theme-name">
+              {t.name}
+              <span className="theme-swatches">
+                {t.swatches.map((c) => <i key={c} style={{ background: c }} />)}
+              </span>
+            </span>
+            <span className="theme-desc">{t.desc}</span>
+            <span className="theme-apply">{value === t.id ? 'Currently live — press Save changes to keep' : 'Click to switch to this look'}</span>
+          </div>
+        </button>
+      ))}
     </div>
   );
 }
@@ -764,6 +861,27 @@ export function Admin({
         <div className="admin-body">
           {view === 'overview' && <Overview draft={draft} setView={setView} dirty={dirty} onSave={save} />}
 
+          {view === 'look' && (
+            <div className="ed-section">
+              <Panel title="Choose the public design">
+                <p className="ed-help">
+                  The whole website switches instantly — text, images, WhatsApp buttons and all your content stay
+                  exactly the same. Click a design, then press <strong>Save changes</strong> to make it live.
+                </p>
+                <ThemePicker
+                  value={draft.designTheme}
+                  onChange={(t) => patch({ designTheme: t })}
+                />
+              </Panel>
+              <Panel title="Good to know">
+                <p className="ed-help" style={{ marginBottom: 0 }}>
+                  You can switch looks whenever you like — nothing is lost. The green WhatsApp button and the
+                  enquiry form adapt to every design automatically.
+                </p>
+              </Panel>
+            </div>
+          )}
+
           {view === 'brand' && (
             <div className="ed-section">
               <Panel title="Site & SEO">
@@ -1294,6 +1412,7 @@ function Overview({ draft, setView, dirty, onSave }: { draft: SiteContent; setVi
         <section className="panel">
           <div className="panel-head"><h2>Jump to a section</h2></div>
           <div className="quick">
+            <button onClick={() => setView('look')}><Palette size={16} /> Switch site design</button>
             <button onClick={() => setView('hero')}><Type size={16} /> Edit hero</button>
             <button onClick={() => setView('work')}><Images size={16} /> Manage portfolio</button>
             <button onClick={() => setView('contact')}><Phone size={16} /> Contact & QR</button>

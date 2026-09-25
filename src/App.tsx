@@ -203,6 +203,15 @@ function PublicSite({ content }: { content: SiteContent }) {
     if (content.site.title) document.title = content.site.title;
   }, [content.site.title]);
 
+  // Apply the selected design theme to <body> (CSS variables live there).
+  useEffect(() => {
+    const theme = ['editorial', 'poster', 'gallery'].includes(content.designTheme)
+      ? content.designTheme
+      : 'gallery';
+    document.body.classList.remove('theme-editorial', 'theme-poster', 'theme-gallery');
+    document.body.classList.add(`theme-${theme}`);
+  }, [content.designTheme]);
+
   // Highlight the nav link of the section currently on screen.
   useEffect(() => {
     const sections = content.nav
@@ -278,8 +287,12 @@ function PublicSite({ content }: { content: SiteContent }) {
     };
   }, [serviceLb, services.length]);
 
+  const themeClass = `theme-${
+    ['editorial', 'poster', 'gallery'].includes(content.designTheme) ? content.designTheme : 'gallery'
+  }`;
+
   return (
-    <div className="site-shell">
+    <div className={`site-shell ${themeClass}`}>
       <header className="site-header">
         <a className="brand" href="#top" aria-label={`${content.brand.name}, home`}>
           <span className="brand-mark">
