@@ -390,6 +390,7 @@ function PublicSite({ content }: { content: SiteContent }) {
             </ul>
             {social.length > 0 && (
               <div className="hero-social" aria-label="Social links">
+                <span className="hero-social-label">Follow</span>
                 {social.map((s) => (
                   <a key={s.id} href={s.url} target="_blank" rel="noreferrer" aria-label={s.label} title={s.label}>
                     <SocialIcon platform={s.platform} size={18} />
@@ -626,16 +627,19 @@ function PublicSite({ content }: { content: SiteContent }) {
                   ))}
                 </div>
               )}
+
+              {content.contact.qrImage && (
+                <figure className="contact-qr">
+                  <img src={content.contact.qrImage} alt={content.contact.qrCaption} onError={onImgError} />
+                  <figcaption>
+                    <strong>{content.contact.qrCaption}</strong>
+                    <span>Point your phone camera at the code to save these details.</span>
+                  </figcaption>
+                </figure>
+              )}
             </div>
 
             <ContactForm content={content} />
-
-            {content.contact.qrImage && (
-              <figure className="contact-qr">
-                <img src={content.contact.qrImage} alt={content.contact.qrCaption} onError={onImgError} />
-                <figcaption>{content.contact.qrCaption}</figcaption>
-              </figure>
-            )}
           </div>
         </section>
       </main>

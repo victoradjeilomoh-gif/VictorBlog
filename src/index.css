@@ -212,6 +212,22 @@ h1 {
 .theme-poster .hero-chips li { border-radius: var(--radius-sm); }
 .hero-chips svg { color: var(--wa); flex: 0 0 auto; }
 
+.hero-social { margin: 34px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.hero-social-label {
+  margin-right: 2px; font-size: .68rem; font-weight: 800; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.hero-social-label::after { content: ""; display: block; width: 22px; height: 1px; margin-top: 6px; background: var(--line-strong); }
+.hero-social a {
+  width: 46px; height: 46px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.theme-poster .hero-social a { border-radius: var(--radius-sm); }
+.hero-social a:hover { background: var(--accent); color: var(--on-accent); border-color: var(--accent); transform: translateY(-2px); }
+.theme-poster .hero-social a:hover, .theme-poster .hero-social a:hover svg { color: #06130b; }
+.hero-social svg { display: block; }
+
 /* Shared artwork frame */
 .artframe {
   position: relative; aspect-ratio: 4 / 5; overflow: hidden;
@@ -349,7 +365,7 @@ h1 {
 .contact-details a > svg:last-child { transition: transform 180ms ease; }
 .location-line { margin-top: 28px; display: flex; align-items: center; gap: 10px; font-size: .82rem; font-weight: 700; color: var(--ink-soft); }
 
-.contact-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(32px, 5vw, 72px); align-items: start; }
+.contact-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 560px); gap: clamp(32px, 5vw, 72px); align-items: start; }
 .contact-social { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; }
 .contact-social a {
   display: inline-flex; align-items: center; gap: 9px; padding: 9px 15px; border-radius: 999px;
@@ -363,9 +379,20 @@ h1 {
 .contact-social a:hover svg { color: var(--on-accent); }
 .theme-poster .contact-social a:hover svg { color: #06130b; }
 
-.contact-qr { margin: 0; width: 210px; max-width: 40vw; text-align: center; }
-.contact-qr img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: #fff; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow-lg); }
-.contact-qr figcaption { margin-top: 12px; font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+.contact-qr {
+  margin: 34px 0 0; width: 100%; max-width: 540px;
+  display: flex; align-items: center; gap: clamp(16px, 2.2vw, 26px);
+  padding: clamp(16px, 2vw, 22px);
+  border: 1px solid var(--line-strong); border-radius: calc(var(--radius) + 4px);
+  background: var(--surface);
+}
+.contact-qr img {
+  width: clamp(96px, 11vw, 132px); flex: 0 0 auto; aspect-ratio: 1 / 1; object-fit: contain;
+  background: #fff; border-radius: calc(var(--radius) * 0.6); padding: 8px;
+}
+.contact-qr figcaption { display: flex; flex-direction: column; gap: 7px; }
+.contact-qr figcaption strong { font-size: .95rem; font-weight: 800; line-height: 1.3; color: var(--ink); }
+.contact-qr figcaption span { font-size: .8rem; line-height: 1.6; color: var(--ink-soft); }
 
 /* WhatsApp floating button */
 .wa-float {
@@ -606,9 +633,15 @@ footer p .footer-credit:hover { border-color: var(--accent); }
   .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
   .contact-layout { grid-template-columns: 1fr; }
-  .contact-qr { width: 200px; max-width: 60vw; }
+  .contact-form { max-width: 640px; }
+}
+
+@media (max-width: 560px) {
+  .contact-qr { flex-direction: column; align-items: flex-start; max-width: none; }
+  .contact-qr img { width: 150px; }
+  .hero-social a { width: 42px; height: 42px; }
 }
 
 @media (max-width: 900px) {
